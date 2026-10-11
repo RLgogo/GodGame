@@ -1,4 +1,3 @@
-#include "gamewidget.h"
 #include <QPainter>
 #include <QKeyEvent>
 #include <QTimer>
@@ -8,6 +7,8 @@
 #include <QColor>
 #include <QPointF>
 #include <QDebug>
+
+#include "include/gamewidget.h"
 
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
@@ -515,6 +516,7 @@ void GameWidget::updategame()                   //更新游戏
                spawnCoolDown=0.0;
         }
       }
+
      bool anyAlive=false;
         for(const Enemy &e : enemies){
             if(e.alive){

@@ -1,6 +1,6 @@
-#include "gamewidget.h"
-
 #include <QApplication>
+
+#include "include/gamewidget.h"
 
 int main(int argc, char *argv[])
 {

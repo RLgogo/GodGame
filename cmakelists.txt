@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.10)
+project(gametest)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Qt5 必须手动开启这三个
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_BUILD_TYPE Release)
+
+set(DCMAKE_PREFIX_PATH "C:/Qt/Qt6.12/6.12.0/mingw_64")
+
+# 寻找Qt5模块
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+
+# 源码列表，按需修改
+add_executable(gametest WIN32
+    src/debug.cpp
+    src/gamewidget.cpp
+    src/gamewidget_draw.cpp
+    src/main.cpp
+
+    include/gamewidget.h
+)
+
+target_include_directories(gametest PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+target_link_libraries(gametest PRIVATE Qt6::Core Qt6::Widgets)

@@ -1,7 +1,8 @@
-#include "gamewidget.h"
 #include <QPainter>
 #include <cmath>
 #include <QDebug>
+
+#include "include/gamewidget.h"
 
 void GameWidget::drawMenu(QPainter &painter)
 {
@@ -398,7 +399,7 @@ void GameWidget::drawHUD(QPainter &painter)
     }
 }
 
-void GameWidget::drawLevelUp(QPainter &painter)
+void GameWidget::drawLevelUp(QPainter &painter)         //绘制升级文字
 {
     if(levelUpTimer<=0)return;
     int alpha=255;
@@ -471,7 +472,7 @@ void GameWidget::drawEnemies(QPainter &painter)
     }
 }
 
-void GameWidget::drawSupplies(QPainter &painter)
+void GameWidget::drawSupplies(QPainter &painter)            //绘制补给品
 {
     for (const AmmoBox &Box:ammoBoxes) {
         if(Box.lifeTimer<300 && (Box.lifeTimer/6)%2==0){

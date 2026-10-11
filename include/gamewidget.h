@@ -131,7 +131,7 @@ private:
     double exhaustThreshold=15.0;
 
     QList<Bullet>bullets;               //子弹
-    int bulletspeed=10;
+    int bulletspeed=100;
 
     QList<Enemy>enemies;                //敌人
     int enemySpeed=2;

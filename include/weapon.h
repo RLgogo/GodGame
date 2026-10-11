@@ -1,0 +1,24 @@
+#ifndef WEAPON_H
+#define WEAPON_H
+
+class Weapon {
+private:
+
+public:
+    Weapon() = default;
+    ~Weapon() = default;
+    virtual void model();
+    virtual void action();
+};
+
+class danqiang : Weapon {
+
+
+};
+
+
+class shuanqiang : Weapon {
+
+};
+
+#endif
