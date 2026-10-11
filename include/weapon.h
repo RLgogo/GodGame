@@ -11,14 +11,15 @@ public:
     virtual void action();
 };
 
-class danqiang : Weapon {
+class danqiang : public Weapon {
 
 
 };
 
 
-class shuanqiang : Weapon {
-
+class Shuanqiang : public Weapon {
+public: 
+    Shuanqiang() = default;
 };
 
 #endif
