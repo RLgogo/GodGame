@@ -12,7 +12,7 @@ class World;
 
 class Entity {
 public:
-    Entity() = default;
+    DEntity() = default;
     virtual ~Entity() = default;
 
     // dt 按值传：实体的 update 不该改到游戏循环的步长。
@@ -30,6 +30,16 @@ public:
     bool alive() const { return alive_; }
     void kill()       { alive_ = false; }   // 只做标记，真正的移除由 Game 统一做
 
+    // 每 tick 开始时记下"我上一 tick 是什么样"，供渲染插值用。
+    // 逻辑跑 20 TPS、画面跑 60 Hz：不插值的话人物每秒跳 20 下，
+    // 冲刺时一 tick 就是 31 像素，看着就是一格一格地闪。
+    // 虚函数是因为派生类还有位置之外的连续量（比如玩家的枪管角度）
+    virtual void savePrevState() { prevPos_ = precisePos_; }
+
+    // 把 renderItem() 填好的数据，从"这一 tick 的值"lerp 回"上一 tick 与这一 tick 之间"。
+    // alpha 是 tick 间隔过了多少（0 = 刚 tick 完，1 = 马上要下一次 tick）
+    virtual void interpolate(RenderItem& item, float alpha) const;
+
     EntityId id() const { return id_; }
     QRect bounds() const { return rect_; }
 
@@ -42,6 +52,7 @@ public:
 protected:
     explicit Entity(const QPointF& pos, const QSize& size)
         : precisePos_(pos)
+        , prevPos_(pos)
         , rect_(QRect(pos.toPoint(), size)) {}
 
     void syncRect() { rect_.moveTo(qRound(precisePos_.x()), qRound(precisePos_.y())); }
@@ -51,6 +62,7 @@ protected:
     //   而且不报错、不崩，只是"这东西怎么不显示"。）
     bool    alive_ = true;
     QPointF precisePos_;
+    QPointF prevPos_;       // 上一 tick 的位置，只为渲染插值存在
     QRect   rect_;
 
 private:

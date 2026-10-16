@@ -156,13 +156,37 @@ void Game::advance(float dt) {
         return;
     }
     step(dt);
+    publishFrame(false);   // 手动驱动：不插值，发布的就是刚算完这一步的状态
+}
+
+void Game::advanceFrame(double frameTime) {
+    const double dt = 1.0 / static_cast<double>(std::max(1, config().tickRate));
+
+    if (paused_ || gameOver_) {
+        // 世界不动，欠账也别攒着 —— 否则一恢复就瞬移一大段
+        accumulator_ = 0.0;
+    } else {
+        accumulator_ += std::min(frameTime, kMaxFrameTime);
+
+        // 硬上限：卡顿之后最多补这么多步，追不上就把余数丢掉
+        const int maxSteps = static_cast<int>(kMaxFrameTime / dt) + 1;
+        int steps = 0;
+        while (accumulator_ >= dt && steps < maxSteps) {
+            step(static_cast<float>(dt));
+            accumulator_ -= dt;
+            ++steps;
+        }
+        if (steps >= maxSteps && accumulator_ >= dt) {
+            accumulator_ = std::fmod(accumulator_, dt);
+        }
+    }
+
     publishFrame();
 }
 
 // =================================== 逻辑线程 ===================================
 
 void Game::run() {
-    const double dt         = 1.0 / static_cast<double>(std::max(1, config().tickRate));
     const double frameGap   = 1.0 / static_cast<double>(std::max(1, config().frameRate));
 
     auto nextFrame = Clock::now();
@@ -170,30 +194,10 @@ void Game::run() {
 
     while (running_) {
         const auto now = Clock::now();
-        const double frameTime = std::min(
-            std::chrono::duration<double>(now - last).count(), kMaxFrameTime);
+        const double frameTime = std::chrono::duration<double>(now - last).count();
         last = now;
 
-        if (paused_ || gameOver_) {
-            // 世界不动，欠账也别攒着 —— 否则一恢复就瞬移一大段
-            accumulator_ = 0.0;
-        } else {
-            accumulator_ += frameTime;
-
-            // 硬上限：卡顿之后最多补这么多步，追不上就把余数丢掉
-            const int maxSteps = static_cast<int>(kMaxFrameTime / dt) + 1;
-            int steps = 0;
-            while (accumulator_ >= dt && steps < maxSteps) {
-                step(static_cast<float>(dt));
-                accumulator_ -= dt;
-                ++steps;
-            }
-            if (steps >= maxSteps && accumulator_ >= dt) {
-                accumulator_ = std::fmod(accumulator_, dt);
-            }
-        }
-
-        publishFrame();
+        advanceFrame(frameTime);
 
         nextFrame += toClockDuration(frameGap);
         const auto after = Clock::now();
@@ -224,6 +228,7 @@ void Game::step(float dt) {
     // 实体各自更新（走路、开火、撞人）—— 它们之间不互相 erase，只 kill()
     for (Slot& slot : slots_) {
         if (slot.entity && slot.entity->alive()) {
+            slot.entity->savePrevState();   // 记下起点，渲染插值要用
             slot.entity->update(dt, *this);
         }
     }
@@ -790,8 +795,20 @@ void Game::clearEnemiesNow() {
 
 // ==================================== 快照 ====================================
 
-void Game::publishFrame() {
+void Game::publishFrame(bool interpolate) {
     auto frame = std::make_shared<Frame>();
+
+    // alpha 是"离下一次 tick 还有多远"：accumulator_ 里剩下的零头除以一步的长度。
+    // 逻辑 20 TPS、画面 60 Hz —— 用它在上一 tick 与这一 tick 的位置之间插值，
+    // 画面上才是连续移动，而不是每秒跳 20 下。
+    //
+    // 注意这条插值天然让画面比逻辑晚 0~1 个 tick（平均 25ms）：插值必须同时握着
+    // "起点和终点"两个状态，所以画的永远是已经发生过的区间。这是标准做法，
+    // 20 TPS 下这点延迟比不上输入本身就有的 50ms。
+    const double stepDt = 1.0 / static_cast<double>(std::max(1, config().tickRate));
+    const float  alpha  = interpolate
+                          ? std::clamp(static_cast<float>(accumulator_ / stepDt), 0.0f, 1.0f)
+                          : 1.0f;
 
     // 画序沿用旧版：玩家 → 子弹 → Boss → 敌人 → 补给
     const Kind ordered[] = {Kind::Player, Kind::Boss, Kind::Enemy, Kind::Pickup};
@@ -799,11 +816,13 @@ void Game::publishFrame() {
         for (EntityId id : query(kindBit(kind))) {
             Entity* entity = get(id);
             if (entity && entity->alive()) {
-                frame->items.push_back(entity->renderItem());
+                RenderItem item = entity->renderItem();
+                entity->interpolate(item, alpha);
+                frame->items.push_back(item);
             }
         }
         if (kind == Kind::Player) {
-            bullets_.appendItems(frame->items);   // 子弹画在玩家之后、Boss 之前
+            bullets_.appendItems(frame->items, alpha);   // 子弹画在玩家之后、Boss 之前
         }
     }
 

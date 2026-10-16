@@ -60,7 +60,14 @@ public:
 
     // ---------------------- 不开线程的手动驱动（自测/工具用）----------------------
     void reset();
+
+    // 恰好走一步（一步 = 1/TickRate 秒）。测试要确定性就用这个
     void advance(float dt);
+
+    // 让 frameTime 这么长的真实时间过去：跑够整数个 tick，剩下的零头留在累加器里，
+    // 再由 publishFrame() 当成插值系数用掉。这才是主循环的走法 ——
+    // 逻辑 20 TPS、画面 60 Hz，差的那部分就是靠这个零头补出来的
+    void advanceFrame(double frameTime);
 
     // ----------------------------------- World -----------------------------------
     std::vector<EntityId> query(KindMask mask) const override;
@@ -111,7 +118,9 @@ private:
     void clearEnemiesNow();
     void grantInvincibleNow(float seconds);
 
-    void publishFrame();
+    // interpolate=true 时按累加器里的零头插值（主循环用）；
+    // false 就是"刚算完这一步的样子"（advance()/手动驱动用，没有那一 tick 的滞后）
+    void publishFrame(bool interpolate = true);
     HudState buildHud();
 
     Player*       player();

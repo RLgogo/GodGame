@@ -27,6 +27,11 @@ public:
     }
     RenderItem renderItem() const override;
 
+    // 位置之外，枪管角度也是每 tick 才算一次的连续量 ——
+    // 鼠标在 60 Hz 动、角度却只在 20 TPS 更新，不插值的话枪管是"一格一格转"的
+    void savePrevState() override;
+    void interpolate(RenderItem& item, float alpha) const override;
+
     int  ammo() const    { return ammo_; }
     int  maxAmmo() const { return maxAmmo_; }
     void addAmmo(int amount);          // 拾取和升级都走这里（会 clamp 到上限）
@@ -60,7 +65,8 @@ private:
 
     QPointF velocity_;
     QPointF aimDir_{1.0, 0.0};
-    float   angle_ = 0.0f;
+    float   angle_     = 0.0f;
+    float   prevAngle_ = 0.0f;   // 上一 tick 的枪管角度，只为渲染插值存在
 };
 
 #endif //GODGAME_PLAYER_H

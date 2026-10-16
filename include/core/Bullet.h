@@ -28,6 +28,8 @@ struct Bullet {
     float      y      = 0.0f;
     float      vx     = 0.0f;                 // 像素 / 秒
     float      vy     = 0.0f;
+    float      px     = 0.0f;                 // 上一 tick 的圆心，只为渲染插值存在
+    float      py     = 0.0f;
     float      radius = 4.0f;
     float      damage = 10.0f;
     float      life   = 2.0f;                 // 剩余寿命（秒）
@@ -38,7 +40,12 @@ struct Bullet {
 
 class BulletField {
 public:
-    void        spawn(const Bullet& bullet) { bullets_.push_back(bullet); }
+    void        spawn(const Bullet& bullet) {
+        Bullet b = bullet;
+        b.px = b.x;         // 新子弹的"上一 tick"就是它的出生点
+        b.py = b.y;
+        bullets_.push_back(b);
+    }
     void        clear() { bullets_.clear(); }
 
     std::size_t size() const { return bullets_.size(); }
@@ -54,8 +61,10 @@ public:
     // swap-and-pop：把最后一颗换到 i 再 pop。顺序会变，子弹之间没有顺序语义
     void killAt(std::size_t i);
 
-    // 把这一帧的子弹塞进快照（子弹不是实体，得自己来）
-    void appendItems(std::vector<RenderItem>& out) const;
+    // 把这一帧的子弹塞进快照（子弹不是实体，得自己来）。
+    // alpha 同 Entity::interpolate：子弹 625 px/s，一 tick 就是 31 像素，
+    // 不插值的话不是"飞过去的"而是"一段一段闪过去的"
+    void appendItems(std::vector<RenderItem>& out, float alpha) const;
 
 private:
     std::vector<Bullet> bullets_;

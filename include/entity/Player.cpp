@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "core/Bullet.h"
+#include "core/Lerp.h"
 #include "core/World.h"
 #include "entity/actor/Buffs.h"
 #include "utils/simpleIni/config.h"
@@ -171,4 +172,14 @@ RenderItem Player::renderItem() const {
 
     fillCommon(item);   // 血条 / 附加条 / 无敌闪烁
     return item;
+}
+
+void Player::savePrevState() {
+    Entity::savePrevState();
+    prevAngle_ = angle_;
+}
+
+void Player::interpolate(RenderItem& item, float alpha) const {
+    Entity::interpolate(item, alpha);   // 位置
+    item.angle = lerpAngle(prevAngle_, item.angle, alpha);
 }
