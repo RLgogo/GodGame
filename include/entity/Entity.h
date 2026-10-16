@@ -12,7 +12,7 @@ class World;
 
 class Entity {
 public:
-    DEntity() = default;
+    Entity() = default;
     virtual ~Entity() = default;
 
     // dt 按值传：实体的 update 不该改到游戏循环的步长。
