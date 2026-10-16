@@ -1,31 +1,70 @@
 cmake_minimum_required(VERSION 3.10)
-project(gametest)
+project(GodGame)
 
-set(CMAKE_CXX_STANDARD 11)
+# 注意：这里写 11 是没用的 —— Qt6 的头文件（qcompilerdetection.h）会直接报
+# "Qt requires a C++17 compiler"，实际编译参数永远是 -std=gnu++17。
+# 与其骗自己，不如老实写 17：代码里已经在用结构化绑定和内联变量了。
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Qt5 必须手动开启这三个
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_BUILD_TYPE Release)
 
-set(DCMAKE_PREFIX_PATH "C:/Qt/Qt6.12/6.12.0/mingw_64")
+# 允许命令行 -DCMAKE_BUILD_TYPE=Debug 覆盖
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-# 寻找Qt5模块
+set(CMAKE_PREFIX_PATH "/Users/Admin/Qt/6.11.1/macos")
+
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 # 源码列表，按需修改
-add_executable(gametest WIN32
-    src/debug.cpp
-    src/gamewidget.cpp
-    src/gamewidget_draw.cpp
-    src/main.cpp
+add_executable(GodGame
+        src/main.cpp
 
-    include/gamewidget.h
+        # 逻辑层：不依赖 Qt Gui，可以无窗口起一个 Game 直接跑
+        src/core/Game.cpp
+        include/core/Game.h
+        src/core/Bullet.cpp
+        include/core/Bullet.h
+        include/core/Damage.h
+        include/core/EntityId.h
+        include/core/Hud.h
+        include/core/Input.h
+        include/core/Kind.h
+        include/core/RenderItem.h
+        include/core/World.h
+
+        # 实体层
+        src/entity/Entity.cpp
+        include/entity/Entity.h
+        include/entity/Player.cpp
+        include/entity/Player.h
+        include/entity/Enemy.cpp
+        include/entity/Enemy.h
+        include/entity/Boss.cpp
+        include/entity/Boss.h
+        include/entity/Pickup.cpp
+        include/entity/Pickup.h
+        include/entity/actor/Actor.cpp
+        include/entity/actor/Actor.h
+        include/entity/actor/Buffs.h
+        include/entity/actor/Buff.h
+        include/entity/actor/Health.h
+        include/entity/actor/StatusList.h
+
+        # 渲染层
+        src/render/Menu.cpp
+        include/render/Menu.h
+
+        # 第三方与工具
+        include/utils/simpleIni/config.h
+        include/utils/simpleIni/SimpleIni.h
 )
 
-target_include_directories(gametest PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(GodGame PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-target_link_libraries(gametest PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(GodGame PRIVATE Qt6::Core Qt6::Widgets)

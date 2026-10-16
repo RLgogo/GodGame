@@ -21,6 +21,6 @@ cmake .. ^
 
 mingw32-make.exe -j 12
 
-windeployqt.exe --release .\gametest.exe --no-translations
+windeployqt.exe --release .\GodGame.exe --no-translations
 cd ..
 endlocal

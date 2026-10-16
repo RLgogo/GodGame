@@ -9,7 +9,7 @@
 *.so.*
 *.dll
 *.dylib
-
+/备份
 # Qt-es
 object_script.*.Release
 object_script.*.Debug
@@ -54,3 +54,7 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+
+# IDE / 本地构建
+/.idea
+/cmake-build-debug
